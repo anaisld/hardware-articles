@@ -1,17 +1,5 @@
-# Engineering Portfolio — GitHub Pages
+Engineering portfolio — GitHub Pages
 
-Static portfolio with four articles. Upload all files and the `assets/` folder to the repository root, then enable GitHub Pages from `main` / `(root)`.
+Upload ALL files and the assets/ directory to the repository root, replacing older files. Commit to main. Settings > Pages > Deploy from a branch > main / (root). Wait for Actions deployment, then hard refresh.
 
-## Files
-- `index.html` — redesigned portfolio homepage
-- `psi5.html` — PSI5 sensor interface
-- `photovoltaic.html` — photovoltaic conversion
-- `embedded-ai.html` — embedded AI gesture interface
-- `rfid.html` — RFID analog simulation
-- `assets/` — original article figures used as homepage previews
-
-## CV
-The CV was not supplied in this conversation. The homepage therefore has an honest placeholder instead of a broken CV link. Once the CV is supplied, add it to `assets/cv.pdf` and replace the résumé placeholder with a download link.
-
-## Deployment
-GitHub repository → Add file → Upload files → drag the **contents** of this folder, including `assets/` → Commit changes. In Settings → Pages select Deploy from a branch → `main` → `/ (root)`.
+The photovoltaic article has corrected subscripts. New articles include source PDF page reproductions. Formula typesetting in new pages uses MathJax via CDN and needs an internet connection.

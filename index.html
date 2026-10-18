@@ -78,8 +78,8 @@ main{padding:72px 0 90px}.section-head{display:flex;justify-content:space-betwee
 .cv-download{display:block;text-align:center;padding:10px 0;font-size:13px}
 @media(max-width:800px){.about{grid-template-columns:1fr;gap:22px}.resume{width:100%;max-width:470px;margin:auto}}
 @media(max-width:600px){.hero{padding:60px 0 75px}.hero h1{font-size:clamp(44px,12vw,67px)}.hero-tagline{font-size:clamp(24px,7vw,34px)}.about{padding:23px}.cv-embed{max-height:none}}
-</style><script id="initial-scroll-guard">(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual';if(location.hash){history.replaceState(null,'',location.pathname+location.search);}}catch(e){}})();</script><style id="mobile-name-adjustments">.brand{color:#f7a5ce!important;font-size:17px;font-weight:850}.nav{position:relative}.hero-name{scroll-margin-top:0}html{scroll-padding-top:0}</style></head><body>
-<header class="top"><div class="container"><nav class="nav"><a class="brand" href="index.html">Anaïs Sallard</a>
+</style><script id="initial-scroll-guard">(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual';if(location.hash){history.replaceState(null,'',location.pathname+location.search);}}catch(e){}})();</script><style id="mobile-name-adjustments">.brand{color:#f7a5ce!important;font-size:13px;font-weight:850}.nav{position:relative}.hero-name{scroll-margin-top:0}html{scroll-padding-top:0}</style></head><body>
+<header class="top"><div class="container"><nav class="nav"><a class="brand" href="index.html">ENGINEERING / PORTFOLIO</a>
 <div class="navlinks"><a href="#projects">Projects</a><a href="#about">About</a><a href="#resume">Résumé</a></div></nav>
 <div class="hero"><span class="eyebrow">Electronics engineer · Hardware &amp; embedded systems</span>
 <h1><span class="hero-name">Anaïs Sallard</span><span class="hero-tagline">Design it. Simulate it. Make it work.</span></h1>
@@ -98,7 +98,7 @@ main{padding:72px 0 90px}.section-head{display:flex;justify-content:space-betwee
   document.querySelectorAll('a[href^="#"]').forEach(function(a){
     a.addEventListener('click',function(){userNavigated=true;});
   });
-  function showTop(){if(!userNavigated){window.scrollTo({top:0,left:0,behavior:'instant'});}}
+  function showTop(){if(!userNavigated){window.scrollTo(0,0);}}
   showTop();
   document.addEventListener('DOMContentLoaded',showTop,{once:true});
   window.addEventListener('load',showTop,{once:true});

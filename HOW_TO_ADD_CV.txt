@@ -1,0 +1,1 @@
+Place your PDF in this same folder and name it resume.pdf (exact spelling, lowercase). Then upload resume.pdf with the site files to the root of your GitHub Pages repository. The homepage automatically displays it in the Résumé panel, with a full-size viewer and download link. No HTML changes required.

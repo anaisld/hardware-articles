@@ -7,7 +7,7 @@
 <h2>Why low-level communication matters in space systems</h2>
 <p>Spaceborne electronics depend on reliable communication between processors, sensors and subsystems. At the lowest software level, reliability starts with correct peripheral configuration, controlled data transfers and predictable responses to hardware events.</p>
 <p>During my work-study experience at <strong>SODERN (France)</strong>, I worked on two complementary activities: developing a <strong>register-level UART driver from scratch</strong> and <strong>adapting existing SpaceWire software</strong> for an XtratuM-based execution environment. Both brought me close to the hardware/software boundary.</p>
-<div class="note"><strong>Scope.</strong> The diagrams below are original explanatory illustrations. They are not screenshots of proprietary code, internal architectures or test reports.</div>
+<div class="note"><strong>Scope.</strong> This article describes selected engineering activities without disclosing proprietary source code, internal architectures or test reports.</div>
 <h2>UART — Developing a driver from scratch</h2>
 <h3>Working directly with peripheral registers</h3>
 <p>Rather than using a high-level serial library, I worked in embedded C with the GR740 UART peripheral through <strong>memory-mapped I/O</strong>. Registers expose the peripheral's configuration and status to the processor: the software writes control settings, checks hardware flags and moves bytes through the data interface.</p>

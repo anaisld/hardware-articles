@@ -1,44 +1,69 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>UART &amp; SpaceWire on GR740 | SODERN (France)</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f6fa;color:#1d2939;font-family:Arial,Helvetica,sans-serif;line-height:1.7}article{max-width:850px;margin:38px auto;background:#fff;padding:55px 65px;box-shadow:0 15px 55px #1d293916}.eyebrow{color:#0c827e;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase}h1{font-size:38px;line-height:1.16;letter-spacing:-1.2px;margin:15px 0}h2{font-size:25px;margin:44px 0 15px;color:#143e55}h3{font-size:18px;margin:27px 0 10px;color:#185c70}.lead{font-size:18px;color:#4e6573}.byline{font-size:13px;color:#607688;margin:24px 0}.technical-figure{margin:28px 0 34px}.technical-figure svg{width:100%;display:block;border-radius:12px}.technical-figure figcaption{font-size:12px;color:#627b8a;margin-top:9px}.note{border-left:4px solid #0c827e;background:#f0f7f7;padding:17px 22px;margin:25px 0}.tags{font-size:12px;color:#607688;margin-top:35px}.project-navigation{max-width:850px;margin:0 auto 40px;padding:25px;background:#fff;border-top:1px solid #dae4eb}.pn-eyebrow{font-size:11px;color:#0c827e;letter-spacing:2px;text-transform:uppercase;font-weight:bold}.pn-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:14px}.pn-link{padding:16px;background:#f1f7f9;border-radius:9px;text-decoration:none;color:#153f52}.pn-link small{display:block;color:#69808b}.pn-link strong{display:block}.pn-home{display:inline-block;margin-top:20px;color:#0c827e;text-decoration:none;font-weight:bold}@media(max-width:650px){article{margin:0;padding:28px 21px}h1{font-size:29px}.pn-grid{grid-template-columns:1fr}.project-navigation{padding:20px}}</style></head><body><article>
-<div class="eyebrow">Professional engineering experience · SODERN (France)</div>
-<h1>From Hardware Registers to Real-Time Communication</h1>
-<p class="lead">Building a UART driver from scratch and adapting SpaceWire communication software for the GR740 processor in a space-systems engineering environment.</p>
-<p class="byline">Embedded C · GR740 / LEON4 · UART · SpaceWire · XtratuM · Real-time software</p>
-<h2>Why low-level communication matters in space systems</h2>
-<p>Spaceborne electronics depend on reliable communication between processors, sensors and subsystems. At the lowest software level, reliability starts with correct peripheral configuration, controlled data transfers and predictable responses to hardware events.</p>
-<p>During my work-study experience at <strong>SODERN (France)</strong>, I worked on two complementary activities: developing a <strong>register-level UART driver from scratch</strong> and <strong>adapting existing SpaceWire software</strong> for an XtratuM-based execution environment. Both brought me close to the hardware/software boundary.</p>
-<div class="note"><strong>Scope.</strong> This article describes selected engineering activities without disclosing proprietary source code, internal architectures or test reports.</div>
-<h2>UART — Developing a driver from scratch</h2>
-<h3>Working directly with peripheral registers</h3>
-<p>Rather than using a high-level serial library, I worked in embedded C with the GR740 UART peripheral through <strong>memory-mapped I/O</strong>. Registers expose the peripheral's configuration and status to the processor: the software writes control settings, checks hardware flags and moves bytes through the data interface.</p>
-<p>Typical register roles include the <strong>data register</strong> for transmitted and received bytes, the <strong>status register</strong> for FIFO and event information, the <strong>control register</strong> for operating modes and interrupt configuration, and the <strong>scaler register</strong> for baud-rate generation. The exact bit fields must be taken from the relevant GR740 documentation.</p>
-
-<h3>Managing messages larger than the hardware FIFO</h3>
-<p>One concrete challenge was handling an <strong>18-byte receive sequence</strong> with a <strong>16-byte FIFO</strong>. A hardware FIFO temporarily stores bytes; it does not, by itself, guarantee that an entire application message will fit. The software must retrieve bytes promptly and preserve the complete message across multiple peripheral reads.</p>
-<p>That requires keeping track of received bytes, checking status flags, handling events at the right time and deciding when a message is complete. This distinction between <strong>hardware buffering</strong> and <strong>software-managed transfer state</strong> is central to driver development.</p>
-
-<h3>Interrupts, timeouts and callbacks</h3>
-<p>Polling repeatedly reads a hardware status register to see whether something has happened. Interrupt-driven processing instead lets the peripheral signal an event so that the processor can execute the relevant handler.</p>
-<p>I worked on <strong>receive-side behavior, callbacks, FIFO flush handling and timeout adjustments</strong>. In particular, timing behavior was refined from approximately <strong>85 µs to 100 µs</strong> in the studied configuration. A timeout is a design parameter: it must be long enough to tolerate expected transfer timing but short enough to avoid waiting indefinitely for incomplete data.</p>
-<p>A callback gives higher-level software a controlled way to react to a completed operation or event without exposing every register operation to the application.</p>
-
-<h3>How the UART work was validated</h3>
-<p>For low-level software, compilation alone does not establish correct behavior. The important checks are whether configuration reaches the peripheral, whether incoming bytes are collected in the intended order, how the driver behaves near FIFO limits, and whether timeouts and callbacks occur as expected.</p>
-<p>The specific proprietary test logs and measured results are not reproduced here; therefore this article does not claim a quantified throughput, latency or flight qualification result.</p>
-<div class="note"><strong>Engineering takeaway.</strong> Writing the UART driver from scratch required reasoning about <strong>register semantics, hardware buffering, asynchronous events and software state</strong>—the mechanisms hidden by most application-level serial APIs.</div>
-<h2>SpaceWire — Adapting software to a partitioned environment</h2>
-<h3>From a communication interface to an integration problem</h3>
-<p><strong>SpaceWire</strong> is a packet-oriented serial communication standard used in spacecraft networks. My task was not to implement the SpaceWire protocol from scratch. It was to <strong>adapt and integrate existing driver software</strong> for the target GR740 execution environment.</p>
-<p>The work involved understanding the existing <strong>GRSPW driver interface</strong> and its initialization path, including operations such as <code>grspw_open</code> and <code>grspw_start</code>, and examining how those operations fit into the target runtime.</p>
-
-<h3>Understanding RTEMS and XtratuM</h3>
-<p>The existing software was associated with <strong>RTEMS</strong>, a real-time operating system. The target system used <strong>XtratuM</strong>, a hypervisor supporting partitioned execution. These are different software architectures: a driver can depend on OS-provided services, while a partitioned runtime may expose different mechanisms and restrictions.</p>
-<p>Consequently, porting a driver is more than recompiling it. It requires identifying dependencies, adapting initialization and execution assumptions, and ensuring that hardware access and communication services remain coherent in the target environment.</p>
-
-<p><strong>XtratuM is not simply a task scheduler, nor does its presence necessarily mean that every partition runs without an operating system.</strong> The precise partition and scheduling configuration is intentionally not described here.</p>
-<h3>What the two activities have in common</h3>
-<p>The UART development emphasized <strong>building a peripheral driver at register level</strong>. The SpaceWire work emphasized <strong>software adaptation, hardware-driver interfaces and runtime integration</strong>. Both required tracing communication behavior across the boundary between software abstractions and physical hardware.</p>
-<h2>Engineering perspective</h2>
-<p>These projects strengthened my foundation in embedded C, the GR740/LEON4 architecture, memory-mapped peripherals, FIFO management, interrupts, timeout behavior, SpaceWire interfaces and real-time software integration. They also taught me to ask a fundamental hardware/software question: <strong>what exactly happens in the peripheral when the software executes this operation?</strong></p>
-<p class="tags">SODERN (France) · Space systems · Embedded C · UART · SpaceWire · GR740 · LEON4 · XtratuM · Register-level programming</p>
-</article><style id="project-navigation-style">.project-navigation{max-width:850px;margin:35px auto;padding:25px;background:#fff;border-top:1px solid #dae4eb}.pn-eyebrow{font-size:11px;color:#0c827e;letter-spacing:2px;text-transform:uppercase;font-weight:bold}.pn-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:14px}.pn-link{padding:16px;background:#f1f7f9;border-radius:9px;text-decoration:none;color:#153f52}.pn-link small{display:block;color:#69808b}.pn-link strong{display:block}.pn-home{display:inline-block;margin-top:20px;color:#0c827e;text-decoration:none;font-weight:bold}@media(max-width:650px){.pn-grid{grid-template-columns:1fr}}</style><nav class="project-navigation"><div class="pn-eyebrow">Keep exploring · 13 / 13</div><div class="pn-grid"><a class="pn-link" href="pcr-thermal-cycler.html"><small>← Previous project</small><strong>PCR Thermal Cycler</strong></a><a class="pn-link" href="psi5.html"><small>Next project →</small><strong>PSI5: Modeling an Automotive Sensor Bus</strong></a></div><a class="pn-home" href="index.html#field-industry">↗ All projects by field</a></nav></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>From Hardware Registers to Real-Time Communication: UART &amp; SpaceWire on the GR740</title><style>*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#1d2939;font-family:Arial,Helvetica,sans-serif;line-height:1.75}article{max-width:850px;margin:38px auto;background:#fff;padding:54px 64px;box-shadow:0 12px 45px #1d293912}.eyebrow{color:#0c827e;font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}h1{font-size:35px;line-height:1.18;letter-spacing:-1px;margin:15px 0 18px}h2{font-size:25px;color:#143e55;margin:42px 0 12px}h3{font-size:19px;color:#185c70;margin:30px 0 10px}.lead{font-size:18px;color:#4e6573}.byline{font-size:13px;color:#607688;margin:24px 0 30px}p{margin:12px 0}ul,ol{padding-left:24px}li{padding:3px 0}table{border-collapse:collapse;width:100%;margin:18px 0 24px;font-size:14px}td,th{text-align:left;padding:11px 14px;border-bottom:1px solid #dce5eb}th{background:#eef5f7;color:#163d52}em{color:#526677}.project-navigation{max-width:850px;margin:35px auto;padding:25px;background:#fff;border-top:1px solid #dae4eb}.pn-eyebrow{font-size:11px;color:#0c827e;letter-spacing:2px;text-transform:uppercase;font-weight:bold}.pn-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:14px}.pn-link{padding:16px;background:#f1f7f9;border-radius:9px;text-decoration:none;color:#153f52}.pn-link small{display:block;color:#69808b}.pn-link strong{display:block}.pn-home{display:inline-block;margin-top:20px;color:#0c827e;text-decoration:none;font-weight:bold}@media(max-width:650px){article{margin:0;padding:28px 21px}h1{font-size:29px}.pn-grid{grid-template-columns:1fr}table{font-size:12px}td,th{padding:8px}}</style></head><body><article><div class="eyebrow">Professional Engineering Experience</div>
+<h1>From Hardware Registers to Real-Time Communication: UART &amp; SpaceWire on the GR740</h1>
+<p class="lead"><em>Low-level embedded C development for space applications — designing a UART driver from scratch and adapting SpaceWire communication software to an XtratuM-based execution environment.</em></p>
+<p class="byline"><strong>SODERN (France) · Embedded Software Engineering · Space Systems</strong></p>
+<h2>Engineering context</h2>
+<p>Spaceborne embedded systems operate under demanding constraints. Communication interfaces must behave predictably, software must interact reliably with hardware peripherals, and timing requirements must be respected.</p>
+<p>During my work-study experience at SODERN (France), I worked on low-level communication software for the <strong>GR740</strong>, a space-oriented processor based on the <strong>LEON4 SPARC architecture</strong>.</p>
+<p>Two activities gave me particularly valuable experience at the hardware–software boundary:</p>
+<ul><li>Developing a UART communication driver from scratch in embedded C.</li><li>Adapting and integrating SpaceWire communication software into an environment using the XtratuM hypervisor.</li></ul>
+<p>Both required understanding the processor peripherals, their hardware registers, interrupt mechanisms and execution environment.</p>
+<h2>UART — Building a Driver from Scratch</h2>
+<h3>Starting from the hardware</h3>
+<p>Unlike application-level serial communication, developing a low-level UART driver requires directly configuring and controlling the peripheral.</p>
+<p>I implemented the driver in C using the GR740 UART's <strong>memory-mapped registers</strong>.</p>
+<p>Memory-mapped I/O means that peripheral registers are accessible through specific memory addresses. The processor can read and write these addresses to configure the UART and interact with its hardware.</p>
+<p>The main register functions include:</p>
+<table><thead><tr><th>Register</th><th>Purpose</th></tr></thead><tbody><tr><td>Data register</td><td>Transmit data and retrieve received characters</td></tr><tr><td>Status register</td><td>Check the state of transmission, reception and FIFOs</td></tr><tr><td>Control register</td><td>Configure UART operation and interrupt behavior</td></tr><tr><td>Scaler register</td><td>Configure the baud-rate timing</td></tr></tbody></table>
+<p>The driver handled initialization and configuration, including baud rate and parity, as well as transmission and reception.</p>
+<p>This work required understanding how software instructions translate into hardware operations, rather than relying on a high-level serial communication library.</p>
+<h3>Transmitting Data Beyond the Hardware FIFO</h3>
+<p>One important challenge was handling messages larger than the UART's hardware FIFO.</p>
+<p>The UART FIFO can temporarily hold a limited number of characters — <strong>16 bytes in the configuration studied</strong> — but this does not mean a message must be limited to 16 bytes.</p>
+<p>To transmit longer messages, the software must manage the remaining data and continue feeding the peripheral as space becomes available.</p>
+<p>An interrupt-driven approach uses the following sequence:</p>
+<ol><li>The application requests a transmission.</li><li>The driver places the first bytes into the UART transmit FIFO.</li><li>The UART hardware progressively transmits those bytes.</li><li>When the peripheral can accept more data, an interrupt allows the driver to continue transmission.</li><li>Once the message is complete, the driver finishes the transfer and updates its internal state.</li></ol>
+<p>This illustrates an important distinction between <strong>hardware buffering</strong> and <strong>software-managed communication</strong>.</p>
+<p>The FIFO provides temporary storage, while the driver manages the complete transfer.</p>
+<h3>Interrupts, Reception and Timing</h3>
+<p>The driver also involved receive and transmit interrupt handling.</p>
+<p>Instead of continuously checking the peripheral state, interrupts allow the processor to react to hardware events.</p>
+<p>On reception, the driver must read incoming data, manage its software state and determine when a complete message has been received.</p>
+<p>This becomes particularly important when message lengths, timing constraints and hardware FIFO capacity interact.</p>
+<p>I worked on reception behavior, timeout handling, callbacks and FIFO management, including flush operations.</p>
+<p>These mechanisms are essential for building a driver that can be integrated into a larger real-time application.</p>
+<h3>Debugging and Validation</h3>
+<p>Low-level development requires checking more than whether the source code compiles.</p>
+<p>A UART driver must be tested against the actual behavior of the peripheral:</p>
+<ul><li>Are the expected register bits configured?</li><li>Does the hardware indicate that data is ready?</li><li>Are interrupts enabled and handled correctly?</li><li>Can the driver transmit a message larger than the FIFO?</li><li>Does reception behave correctly at message boundaries?</li><li>What happens when a timeout occurs?</li></ul>
+<p>The work involved debugging hardware–software interactions, validating communication behavior and developing supporting tests.</p>
+<p><strong>Engineering takeaway:</strong> writing a driver from scratch gave me a much deeper understanding of how processor registers, FIFOs, interrupts and real-time software cooperate to implement a seemingly simple serial interface.</p>
+<h2>SpaceWire — Adapting Communication Software to XtratuM</h2>
+<h3>What is SpaceWire?</h3>
+<p>SpaceWire is a high-speed communication standard designed for onboard spacecraft networks.</p>
+<p>Unlike UART, which is commonly used for simpler serial communication, SpaceWire supports packet-oriented data exchanges between spacecraft subsystems.</p>
+<p>The challenge here was not to create a SpaceWire protocol implementation from scratch, but to <strong>adapt existing communication software to a different execution environment</strong>.</p>
+<h3>From RTEMS to an XtratuM-Based Environment</h3>
+<p>The existing software was associated with an RTEMS environment, while the target system used <strong>XtratuM</strong>, a real-time hypervisor.</p>
+<p>RTEMS is a real-time operating system that provides services such as task scheduling, synchronization and device-driver infrastructure.</p>
+<p>XtratuM, by contrast, provides a partitioned execution environment in which software components execute within controlled partitions.</p>
+<p>This distinction matters because a driver may depend on operating-system services that are not available in the same form in its new environment.</p>
+<p>Adapting communication software therefore requires examining its dependencies and identifying which operations must be replaced, modified or integrated differently.</p>
+<h3>Driver Integration and Hardware Access</h3>
+<p>My work involved adapting the SpaceWire communication service to the target environment, including its interaction with the GR740 hardware and the software execution infrastructure.</p>
+<p>The work required understanding the relationship between:</p>
+<ul><li>The SpaceWire peripheral and its hardware-facing driver.</li><li>The communication service exposed to the application.</li><li>The execution environment and its available interfaces.</li><li>Initialization, communication and error-handling behavior.</li></ul>
+<p>This is an important aspect of embedded software engineering: even when the hardware peripheral remains the same, changing the execution environment can require significant software adaptation.</p>
+<h3>Real-Time Execution and Partitioning</h3>
+<p>In a partitioned system, execution is controlled by the hypervisor rather than by a single conventional operating system managing all applications.</p>
+<p>This introduces architectural constraints around how software is initialized, how services are accessed and how execution resources are assigned.</p>
+<p>For communication software, these constraints must be considered alongside the hardware requirements.</p>
+<p><strong>Engineering takeaway:</strong> this activity strengthened my understanding of the relationship between hardware drivers, real-time execution environments and software portability.</p>
+<h2>What These Projects Taught Me</h2>
+<p>These two developments provided complementary perspectives on embedded communication.</p>
+<p><strong>The UART project</strong> focused on building a peripheral driver from the ground up: configuring registers, controlling data transfers, handling interrupts and managing timing.</p>
+<p><strong>The SpaceWire project</strong> focused on integrating and adapting communication software within a constrained execution environment.</p>
+<p>Together, they strengthened my experience in:</p>
+<ul><li>Embedded C and register-level programming.</li><li>GR740 / LEON4 processor architecture.</li><li>UART and SpaceWire communication.</li><li>Interrupt-driven data transfer and FIFO management.</li><li>Real-time execution constraints.</li><li>Hardware–software integration, debugging and validation.</li></ul>
+<p>Working at this level helped me connect software behavior to the underlying electronics and processor architecture — an understanding I consider essential for embedded hardware and systems engineering.</p>
+<p><em>Technical scope: this article describes engineering principles and selected development activities. Proprietary implementation details, source code and internal validation data are intentionally omitted.</em></p></article><nav class="project-navigation"><div class="pn-eyebrow">Keep exploring · 13 / 13</div><div class="pn-grid"><a class="pn-link" href="pcr-thermal-cycler.html"><small>← Previous project</small><strong>PCR Thermal Cycler</strong></a><a class="pn-link" href="psi5.html"><small>Next project →</small><strong>PSI5: Modeling an Automotive Sensor Bus</strong></a></div><a class="pn-home" href="index.html#field-industry">↗ All projects by field</a></nav></body></html>
